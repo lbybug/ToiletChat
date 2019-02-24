@@ -7,8 +7,11 @@ import android.view.Window;
 import com.example.lee.toiletchat.R;
 
 import utils.ActivityCollectorUtils;
+import utils.LoggerUtils;
 
 public class BaseActivity extends Activity {
+
+    private static final String TAG = "BaseActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +24,7 @@ public class BaseActivity extends Activity {
 
     public void initData(){
         //初始化数据操作
+        LoggerUtils.d("initData: father class initData");
     }
 
     @Override

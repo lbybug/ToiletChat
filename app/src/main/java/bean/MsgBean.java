@@ -28,4 +28,6 @@ public class MsgBean {
     public void setType(int type) {
         this.type = type;
     }
+
+
 }
