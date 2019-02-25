@@ -9,39 +9,46 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.lee.toiletchat.R;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import adapter.BluetoothDeviceAdapter;
+import butterknife.BindView;
+import butterknife.OnClick;
+import listener.Constants;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
 import permissions.dispatcher.OnPermissionDenied;
 import permissions.dispatcher.OnShowRationale;
 import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
+import service.BluetoothService;
+import utils.ChatUtils;
 import utils.LoggerUtils;
 
 @RuntimePermissions
-public class WaitConnectionActivity extends BaseActivity {
+public class WaitConnectionActivity extends BaseActivity implements AdapterView.OnItemClickListener {
 
     private static final String TAG = "WaitConnectionActivity";
     public static final int REQUEST_BLUETOOTH = 0x04;
+    public static final int CONNECT_SUCCESS = 0x05;
 
     public int platform = 0;
 
@@ -51,15 +58,23 @@ public class WaitConnectionActivity extends BaseActivity {
 
     public BluetoothSocket socket;
 
+    public BluetoothService bluetoothService;
+
+    public ConnectHandler connectHandler;
+
     public String serviceName = "btspp";
     private static final UUID MY_UUID_SECURE =
             UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-
+    @BindView(R.id.btBluetoothScan)
     Button btBluetoothScan;
+    @BindView(R.id.bluetoothDevices)
     ListView bluetoothDevices;
-    LinearLayout serverLayout;
+    @BindView(R.id.clientLayout)
+    LinearLayout clientLayout;
+    @BindView(R.id.clientStatus)
     TextView clientStatus;
-    RelativeLayout clientLayout;
+    @BindView(R.id.serverLayout)
+    RelativeLayout serverLayout;
 
 
     private Set<BluetoothDevice> bondedDevices;
@@ -72,22 +87,9 @@ public class WaitConnectionActivity extends BaseActivity {
     @Override
     public void initData() {
         super.initData();
-        btBluetoothScan = findViewById(R.id.btBluetoothScan);
-        bluetoothDevices = findViewById(R.id.bluetoothDevices);
-        serverLayout = findViewById(R.id.serverLayout);
-        clientLayout = findViewById(R.id.clientLayout);
-        clientStatus = findViewById(R.id.clientStatus);
         platform = getIntent().getIntExtra("platform", 0);
         LoggerUtils.d(String.valueOf(platform));
         WaitConnectionActivityPermissionsDispatcher.locationPermissionWithCheck(this);
-
-
-        btBluetoothScan.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Toast.makeText(WaitConnectionActivity.this, "响应扫描事件", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     @Override
@@ -110,11 +112,12 @@ public class WaitConnectionActivity extends BaseActivity {
     }
 
     public void checkPlatform() {
+        connectHandler = new ConnectHandler(this);
         if (platform == 0) { //服务端
             clientLayout.setVisibility(View.GONE);
             waitClient();
         } else { //客户端
-            serverLayout.setVisibility(View.VISIBLE);
+            serverLayout.setVisibility(View.GONE);
             IntentFilter filter = new IntentFilter();
             filter.addAction(BluetoothDevice.ACTION_FOUND);
             filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
@@ -123,6 +126,7 @@ public class WaitConnectionActivity extends BaseActivity {
             newDevices = new ArrayList<>();
             bluetoothDeviceAdapter = new BluetoothDeviceAdapter(pairedDevices, newDevices, this);
             bluetoothDevices.setAdapter(bluetoothDeviceAdapter);
+            bluetoothDevices.setOnItemClickListener(this);
             getBoundDevices();
         }
     }
@@ -138,7 +142,7 @@ public class WaitConnectionActivity extends BaseActivity {
                         socket = serverSocket.accept();
                         LoggerUtils.d("有客户端介入" + socket.getRemoteDevice().getName());
                         LoggerUtils.d("套接字是否为空：" + (socket == null));
-                        socket.connect();
+                        connectHandler.obtainMessage(CONNECT_SUCCESS).sendToTarget();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -218,9 +222,13 @@ public class WaitConnectionActivity extends BaseActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (platform == 0) {
+        if (platform == 1) {
             unregisterReceiver(findBluetooth);
             //关闭广播
+        }
+        if (connectHandler != null) {
+            connectHandler.removeCallbacksAndMessages(null);
+            connectHandler = null;
         }
     }
 
@@ -244,4 +252,74 @@ public class WaitConnectionActivity extends BaseActivity {
             }
         }
     };
+
+    @OnClick(R.id.btBluetoothScan)
+    public void onViewClicked() {
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        if (i == 0 || i == pairedDevices.size() + 1) {
+            return;
+        }
+        if (bluetoothAdapter.isDiscovering()) {
+            bluetoothAdapter.cancelDiscovery();
+        }
+
+        BluetoothDevice device;
+
+        if (i < pairedDevices.size() + 1) { //点击配对设备
+            device = pairedDevices.get(i - 1);
+        } else {
+            device = newDevices.get(i - pairedDevices.size() - 2);
+        }
+        bluetoothService = BluetoothService.getInstance(this,connectHandler);
+        String address = device.getAddress();
+        bluetoothService.connect(BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address), true);
+    }
+
+    public class ConnectHandler extends Handler{
+
+        public WeakReference<WaitConnectionActivity> waitConnectionActivityWeakReference;
+
+        public ConnectHandler(WaitConnectionActivity waitConnectionActivityWeakReference) {
+            this.waitConnectionActivityWeakReference = new WeakReference<>(waitConnectionActivityWeakReference);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            WaitConnectionActivity activity = waitConnectionActivityWeakReference.get();
+            if (activity != null) {
+                switch (msg.what) {
+                    case Constants.MESSAGE_STATE_CHANGE:
+                        switch (msg.arg1) {
+                            case BluetoothService.STATE_NONE:
+                                //连接失败
+                                break;
+                            case BluetoothService.STATE_CONNECTING:
+                                //连接中
+                                break;
+                            case BluetoothService.STATE_CONNECTED:
+                                //连接成功
+                                ChatUtils.setBluetoothService(bluetoothService);
+                                ChatActivity.actionStart(WaitConnectionActivity.this,platform);
+                                finish();
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
+                    case CONNECT_SUCCESS:
+                        LoggerUtils.d("服务端连接成功");
+                        ChatUtils.setBluetoothSocket(socket);
+                        ChatActivity.actionStart(WaitConnectionActivity.this,platform);
+                        finish();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
 }

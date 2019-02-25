@@ -1,13 +1,11 @@
 package com.example.lee.toiletchat.activity;
 
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
 import com.example.lee.toiletchat.R;
 
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class MainActivity extends BaseActivity {
@@ -34,9 +32,11 @@ public class MainActivity extends BaseActivity {
         switch (view.getId()) {
             case R.id.chooseServer:
                 WaitConnectionActivity.actionStart(this,0);
+                finish();
                 break;
             case R.id.chooseClient:
                 WaitConnectionActivity.actionStart(this,1);
+                finish();
                 break;
         }
     }
