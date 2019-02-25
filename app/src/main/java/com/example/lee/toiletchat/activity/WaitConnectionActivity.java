@@ -11,12 +11,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.lee.toiletchat.R;
 
@@ -38,6 +40,7 @@ import utils.LoggerUtils;
 @RuntimePermissions
 public class WaitConnectionActivity extends BaseActivity {
 
+    private static final String TAG = "WaitConnectionActivity";
     public static final int REQUEST_BLUETOOTH = 0x04;
 
     public int platform = 0;
@@ -67,12 +70,6 @@ public class WaitConnectionActivity extends BaseActivity {
 
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_wait_connection);
-    }
-
-    @Override
     public void initData() {
         super.initData();
         btBluetoothScan = findViewById(R.id.btBluetoothScan);
@@ -83,6 +80,19 @@ public class WaitConnectionActivity extends BaseActivity {
         platform = getIntent().getIntExtra("platform", 0);
         LoggerUtils.d(String.valueOf(platform));
         WaitConnectionActivityPermissionsDispatcher.locationPermissionWithCheck(this);
+
+
+        btBluetoothScan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(WaitConnectionActivity.this, "响应扫描事件", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public int getLayoutId() {
+        return R.layout.activity_wait_connection;
     }
 
     private void initBluetooth() {

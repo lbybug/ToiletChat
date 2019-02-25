@@ -17,16 +17,15 @@ public class MainActivity extends BaseActivity {
     @BindView(R.id.chooseClient)
     Button chooseClient;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-    }
 
     @Override
     public void initData() {
         super.initData();
+    }
+
+    @Override
+    public int getLayoutId() {
+        return R.layout.activity_main;
     }
 
 

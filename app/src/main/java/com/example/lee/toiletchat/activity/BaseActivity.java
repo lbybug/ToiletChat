@@ -6,10 +6,11 @@ import android.view.Window;
 
 import com.example.lee.toiletchat.R;
 
+import butterknife.ButterKnife;
 import utils.ActivityCollectorUtils;
 import utils.LoggerUtils;
 
-public class BaseActivity extends Activity {
+public abstract class BaseActivity extends Activity {
 
     private static final String TAG = "BaseActivity";
 
@@ -17,15 +18,20 @@ public class BaseActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        setContentView(R.layout.activity_base);
+        setContentView(getLayoutId());
+        ButterKnife.bind(this);
         initData();
         ActivityCollectorUtils.addActivity(this);
     }
 
-    public void initData(){
+
+    public void initData() {
         //初始化数据操作
         LoggerUtils.d("initData: father class initData");
     }
+
+    public abstract int getLayoutId();
+
 
     @Override
     protected void onDestroy() {

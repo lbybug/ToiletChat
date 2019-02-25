@@ -27,17 +27,16 @@ public class ChatActivity extends BaseActivity {
     @BindView(R.id.sendMsg)
     Button sendMsg;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_chat);
-        ButterKnife.bind(this);
-    }
 
     @Override
     public void initData() {
         super.initData();
         chatHandler = new ChatHandler(this);
+    }
+
+    @Override
+    public int getLayoutId() {
+        return R.layout.activity_chat;
     }
 
     @OnClick(R.id.sendMsg)
