@@ -3,4 +3,9 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#ffffff</color>
+    <color name="dimGray">#696969</color><!--暗灰色 -->
+    <color name="whiteSmoke">#F5F5F5</color><!--烟白色 -->
+    <color name="black90">#383431</color><!--黑色 -->
 </resources>
