@@ -32,14 +32,13 @@ import java.util.UUID;
 import adapter.BluetoothDeviceAdapter;
 import butterknife.BindView;
 import butterknife.OnClick;
-import listener.Constants;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
 import permissions.dispatcher.OnPermissionDenied;
 import permissions.dispatcher.OnShowRationale;
 import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
-import service.BluetoothService;
+import utils.BluetoothClientUtils;
 import utils.ChatUtils;
 import utils.LoggerUtils;
 
@@ -58,7 +57,7 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
 
     public BluetoothSocket socket;
 
-    public BluetoothService bluetoothService;
+    public BluetoothClientUtils bluetoothClientUtils;
 
     public ConnectHandler connectHandler;
 
@@ -117,6 +116,7 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
             clientLayout.setVisibility(View.GONE);
             waitClient();
         } else { //客户端
+            bluetoothClientUtils = new BluetoothClientUtils(this);
             serverLayout.setVisibility(View.GONE);
             IntentFilter filter = new IntentFilter();
             filter.addAction(BluetoothDevice.ACTION_FOUND);
@@ -142,6 +142,7 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
                         socket = serverSocket.accept();
                         LoggerUtils.d("有客户端介入" + socket.getRemoteDevice().getName());
                         LoggerUtils.d("套接字是否为空：" + (socket == null));
+                        ChatUtils.setBluetoothSocket(socket);
                         connectHandler.obtainMessage(CONNECT_SUCCESS).sendToTarget();
                     }
                 } catch (IOException e) {
@@ -273,9 +274,31 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
         } else {
             device = newDevices.get(i - pairedDevices.size() - 2);
         }
-        bluetoothService = BluetoothService.getInstance(this,connectHandler);
         String address = device.getAddress();
-        bluetoothService.connect(BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address), true);
+        bluetoothClientUtils.setListener(new BluetoothClientUtils.ClientListener() {
+            @Override
+            public void onStart() {
+                LoggerUtils.d("connect start");
+            }
+
+            @Override
+            public void onConnecting() {
+                LoggerUtils.d("connecting...");
+            }
+
+            @Override
+            public void onSuccess(BluetoothSocket socket) {
+                LoggerUtils.d("connect success,the socket is null ? " + (socket == null));
+                ChatUtils.setBluetoothSocket(socket);
+                connectHandler.obtainMessage(CONNECT_SUCCESS).sendToTarget();
+            }
+
+            @Override
+            public void onFailed() {
+                LoggerUtils.d("connect failed");
+            }
+        });
+        bluetoothClientUtils.connect(BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address), true);
     }
 
     public class ConnectHandler extends Handler{
@@ -291,28 +314,9 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
             WaitConnectionActivity activity = waitConnectionActivityWeakReference.get();
             if (activity != null) {
                 switch (msg.what) {
-                    case Constants.MESSAGE_STATE_CHANGE:
-                        switch (msg.arg1) {
-                            case BluetoothService.STATE_NONE:
-                                //连接失败
-                                break;
-                            case BluetoothService.STATE_CONNECTING:
-                                //连接中
-                                break;
-                            case BluetoothService.STATE_CONNECTED:
-                                //连接成功
-                                ChatUtils.setBluetoothService(bluetoothService);
-                                ChatActivity.actionStart(WaitConnectionActivity.this,platform);
-                                finish();
-                                break;
-                            default:
-                                break;
-                        }
-                        break;
                     case CONNECT_SUCCESS:
-                        LoggerUtils.d("服务端连接成功");
-                        ChatUtils.setBluetoothSocket(socket);
-                        ChatActivity.actionStart(WaitConnectionActivity.this,platform);
+                        LoggerUtils.d("Successful docking");
+                        ChatActivity.actionStart(WaitConnectionActivity.this);
                         finish();
                         break;
                     default:

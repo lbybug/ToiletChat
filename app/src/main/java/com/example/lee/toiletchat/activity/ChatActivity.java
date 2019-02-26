@@ -25,7 +25,6 @@ import bean.MsgBean;
 import butterknife.BindView;
 import butterknife.OnClick;
 import listener.ChatListener;
-import service.BluetoothService;
 import utils.ChatUtils;
 import utils.LoggerUtils;
 
@@ -42,11 +41,8 @@ public class ChatActivity extends BaseActivity {
     @BindView(R.id.sendMsg)
     Button sendMsg;
 
-    int platform = 0;
-
-    public BluetoothService bluetoothService;
     public BluetoothSocket bluetoothSocket;
-    public ServerThread thread;
+    public ReadWriteThread thread;
 
     public ChatAdapter chatAdapter;
 
@@ -59,31 +55,16 @@ public class ChatActivity extends BaseActivity {
         chatHandler = new ChatHandler(this);
         msgBeanList = new ArrayList<>();
         chatAdapter = new ChatAdapter(msgBeanList);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         chatList.setLayoutManager(layoutManager);
         chatList.setAdapter(chatAdapter);
-        platform = getIntent().getIntExtra("platform",0);
-        if (platform == 0){
-            bluetoothSocket = ChatUtils.getBluetoothSocket();
-            startReadWriteThread();
-        }else {
-            bluetoothService = ChatUtils.getBluetoothService();
-            bluetoothService.setListener(new ChatListener() {
-                @Override
-                public void onReceived(String content) {
-                    MsgBean msg = new MsgBean();
-                    msg.setContent(content);
-                    msg.setType(MsgBean.RECEIVED);
-                    msgBeanList.add(msg);
-                    chatHandler.obtainMessage(NOTIFY_MSG).sendToTarget();
-                }
-            });
-        }
+        bluetoothSocket = ChatUtils.getBluetoothSocket();
+        startReadWriteThread();
     }
 
     private void startReadWriteThread() {
         LoggerUtils.d("开启读写线程");
-        thread = new ServerThread(bluetoothSocket, new ChatListener() {
+        thread = new ReadWriteThread(bluetoothSocket, new ChatListener() {
             @Override
             public void onReceived(String content) {
                 MsgBean msg = new MsgBean();
@@ -108,13 +89,9 @@ public class ChatActivity extends BaseActivity {
 
     private void sendMsg() {
         String content = editMsg.getText().toString().trim();
-        if (!TextUtils.isEmpty(content)){
+        if (!TextUtils.isEmpty(content)) {
             //此处发送数据
-            if (platform == 0){
-                thread.write(content.getBytes());
-            }else {
-                bluetoothService.write(content.getBytes());
-            }
+            thread.write(content.getBytes());
             MsgBean msgBean = new MsgBean();
             msgBean.setContent(content);
             msgBean.setType(MsgBean.SEND);
@@ -124,9 +101,8 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
-    public static void actionStart(Context context,int platform){
-        Intent intent = new Intent(context,ChatActivity.class);
-        intent.putExtra("platform",platform);
+    public static void actionStart(Context context) {
+        Intent intent = new Intent(context, ChatActivity.class);
         context.startActivity(intent);
     }
 
@@ -142,7 +118,7 @@ public class ChatActivity extends BaseActivity {
         public void handleMessage(Message msg) {
             ChatActivity activity = weakReference.get();
             if (activity != null) {
-                switch (msg.what){
+                switch (msg.what) {
                     case NOTIFY_MSG:
                         activity.chatAdapter.notifyDataSetChanged();
                         activity.chatList.scrollToPosition(activity.msgBeanList.size() - 1);
@@ -152,14 +128,14 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
-    public class ServerThread extends Thread{
+    public class ReadWriteThread extends Thread {
 
         public BluetoothSocket socket;
         public InputStream inputStream;
         public OutputStream outputStream;
         public ChatListener listener;
 
-        public ServerThread(BluetoothSocket socket,ChatListener listener) {
+        public ReadWriteThread(BluetoothSocket socket, ChatListener listener) {
             try {
                 this.socket = socket;
                 this.listener = listener;
@@ -169,6 +145,7 @@ public class ChatActivity extends BaseActivity {
                 e.printStackTrace();
             }
         }
+
         @Override
         public void run() {
             byte[] buffer = new byte[1024];
@@ -179,7 +156,7 @@ public class ChatActivity extends BaseActivity {
                     bytes = inputStream.read(buffer);
                     String result = new String(buffer, 0, bytes);
                     LoggerUtils.d(result);
-                    if (listener != null){
+                    if (listener != null) {
                         listener.onReceived(result);
                     }
                 } catch (IOException e) {
@@ -187,6 +164,7 @@ public class ChatActivity extends BaseActivity {
                 }
             }
         }
+
         public void write(byte[] buffer) {
             try {
                 outputStream.write(buffer);
@@ -196,4 +174,11 @@ public class ChatActivity extends BaseActivity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (bluetoothSocket != null) {
+            ChatUtils.clean();
+        }
+    }
 }
