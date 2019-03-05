@@ -266,9 +266,7 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
         if (bluetoothAdapter.isDiscovering()) {
             bluetoothAdapter.cancelDiscovery();
         }
-
         BluetoothDevice device;
-
         if (i < pairedDevices.size() + 1) { //点击配对设备
             device = pairedDevices.get(i - 1);
         } else {

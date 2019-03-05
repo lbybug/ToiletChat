@@ -60,7 +60,6 @@ public class BluetoothClientUtils {
                 bluetoothSocket.connect();
                 listener.onSuccess(bluetoothSocket);
             } catch (IOException e) {
-//                e.printStackTrace();
                 listener.onFailed();
             }
         }
