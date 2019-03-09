@@ -27,10 +27,10 @@ public class BluetoothClientUtils {
     }
 
     public void connect(BluetoothDevice device,boolean flag){
-        listener.onStart();
         if (device != null) {
             LoggerUtils.d("device is not null");
             LoggerUtils.d("prepare to connect "+device.getName() + ",address = " + device.getAddress());
+            listener.onStart();
             ConnectThread thread = new ConnectThread(device,flag);
             thread.cancel();
             thread.start();
@@ -60,7 +60,6 @@ public class BluetoothClientUtils {
                 bluetoothSocket.connect();
                 listener.onSuccess(bluetoothSocket);
             } catch (IOException e) {
-//                e.printStackTrace();
                 listener.onFailed();
             }
         }
@@ -76,6 +75,7 @@ public class BluetoothClientUtils {
     }
 
     public interface ClientListener{
+
         void onStart();
 
         void onConnecting();

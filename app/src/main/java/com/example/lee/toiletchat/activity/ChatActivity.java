@@ -58,6 +58,7 @@ public class ChatActivity extends BaseActivity {
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         chatList.setLayoutManager(layoutManager);
         chatList.setAdapter(chatAdapter);
+
         bluetoothSocket = ChatUtils.getBluetoothSocket();
         startReadWriteThread();
     }
