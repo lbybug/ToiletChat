@@ -153,9 +153,7 @@ public class ScaleImage extends View {
                     Log.d(TAG, "onTouchEvent: "+left);
                     Log.d(TAG, "onTouchEvent: "+top);
                     layout(left,top,right,bottom);
-//                    RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) getLayoutParams();
-//                    params.setMargins(left,top,right,bottom);
-//                    postInvalidate();
+
                     currentXY[0] = moveX;
                     currentXY[1] = moveY;
                 }else if (currentStatus == RIGHT_SCALE){

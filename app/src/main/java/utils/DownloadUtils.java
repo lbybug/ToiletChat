@@ -65,7 +65,7 @@ public class DownloadUtils extends AsyncTask<String,Integer,Integer>{
             }else if (contentLength == downloadedLength){
                 return TYPE_SUCCESS;
             }
-            OkHttpClient client = OkhttpUtils.getOkHttp();
+            OkHttpClient client = OkHttpUtils.getOkHttp();
             Request request = new Request.Builder().addHeader("RANGE","bytes=" + downloadedLength + "-").url(downloadUrl).build();
             Response response = client.newCall(request).execute();
             if (response != null && response.isSuccessful()){
@@ -143,7 +143,7 @@ public class DownloadUtils extends AsyncTask<String,Integer,Integer>{
 
     private long getContentLength(String downloadUrl) {
         try {
-            OkHttpClient client = OkhttpUtils.getOkHttp();
+            OkHttpClient client = OkHttpUtils.getOkHttp();
             Request request = new Request.Builder().url(downloadUrl).build();
             Response response = client.newCall(request).execute();
             if (response != null && response.isSuccessful()) {

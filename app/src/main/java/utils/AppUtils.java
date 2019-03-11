@@ -13,6 +13,4 @@ public class AppUtils extends Application{
         super.onCreate();
     }
 
-
-
 }

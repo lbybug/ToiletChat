@@ -9,7 +9,7 @@ import okhttp3.OkHttpClient;
  */
 
 
-public class OkhttpUtils {
+public class OkHttpUtils {
 
     public static OkHttpClient client;
 

@@ -18,6 +18,7 @@ import com.example.lee.toiletchat.R;
 import butterknife.BindView;
 import butterknife.OnClick;
 import service.DownloadService;
+import utils.OkHttpUtils;
 
 public class DownloadActivity extends BaseActivity {
 
@@ -108,6 +109,7 @@ public class DownloadActivity extends BaseActivity {
         Intent intent = new Intent(this,DownloadService.class);
         stopService(intent);
         unbindService(conn);
+        OkHttpUtils.clean();
         Log.d(TAG, "onDestroy: 解除服务");
     }
 }
