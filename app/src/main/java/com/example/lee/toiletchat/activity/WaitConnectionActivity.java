@@ -85,7 +85,6 @@ public class WaitConnectionActivity extends BaseActivity implements AdapterView.
 
     @Override
     public void initData() {
-        super.initData();
         platform = getIntent().getIntExtra("platform", 0);
         LoggerUtils.d(String.valueOf(platform));
         WaitConnectionActivityPermissionsDispatcher.locationPermissionWithCheck(this);

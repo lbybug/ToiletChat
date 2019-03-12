@@ -51,7 +51,6 @@ public class ChatActivity extends BaseActivity {
 
     @Override
     public void initData() {
-        super.initData();
         chatHandler = new ChatHandler(this);
         msgBeanList = new ArrayList<>();
         chatAdapter = new ChatAdapter(msgBeanList);

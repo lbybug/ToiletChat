@@ -7,6 +7,6 @@ package listener;
 
 public interface ChatListener {
 
-    void onReceived(String content);  //接受信息
+    void onReceived(String content);  //接收信息
 
 }

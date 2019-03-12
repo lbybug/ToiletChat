@@ -72,7 +72,7 @@ public class DownloadUtils extends AsyncTask<String,Integer,Integer>{
                 is = response.body().byteStream();
                 savedFile = new RandomAccessFile(file,"rw");
                 savedFile.seek(downloadedLength);
-                byte[] bytes = new byte[1024];
+                byte[] bytes = new byte[10240];
                 int total = 0;
                 int len;
                 while ((len = is.read(bytes)) != -1){
