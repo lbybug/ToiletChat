@@ -17,6 +17,7 @@ public abstract class BaseActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(getLayoutId());
         ButterKnife.bind(this);
+        initData();
         ActivityCollectorUtils.addActivity(this);
     }
 
